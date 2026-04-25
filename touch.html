@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hand Controller</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sidebar-bg: #18181c;
+    --sidebar-border: #28282e;
+    --page-bg: #111115;
+    --card-bg: rgba(28,28,34,0.93);
+    --card-border: #28282e;
+    --text-primary: #f0f0f6;
+    --text-secondary: #6a6a78;
+    --outline-bg: #1c1c22;
+    --outline-border: #30303a;
+    --outline-text: #8d8d9a;
+    --combo-bg: #1c1c22;
+    --combo-border: #30303a;
+    --combo-text: #9898a8;
+    --help-bg: #2a2a36;
+    --help-text: #9898b8;
+    --nav-active-bg: #22222c;
+    --nav-text-active: #f0f0f6;
+    --nav-text-inactive: #55556a;
+    --stop-fill: #2e1e1e;
+    --stop-text: #ff8888;
+    --close-fill: #222228;
+    --close-text: #aaaabc;
+    --toggle-off-track: #26262e;
+    --toggle-off-border: #30303a;
+    --accent: #6272ff;
+    --accent2: #a78bfa;
+    --status-dot-on: #22c55e;
+    --status-dot-off: #4b5563;
+    --df-bg: #0d0d12;
+    --slider-groove: #26262e;
+    --danger-border: #9b2828;
+    --danger-text: #ff5555;
+    --font: 'Outfit', sans-serif;
+  }
+
+  .light {
+    --sidebar-bg: #1e2433;
+    --sidebar-border: #2c3347;
+    --page-bg: #f4f1eb;
+    --card-bg: rgba(255,255,255,0.97);
+    --card-border: #e2ddd6;
+    --text-primary: #1a1a24;
+    --text-secondary: #6b6860;
+    --outline-bg: #ffffff;
+    --outline-border: #d9d5ce;
+    --outline-text: #5a5650;
+    --combo-bg: #ffffff;
+    --combo-border: #d9d5ce;
+    --combo-text: #2c2a26;
+    --help-bg: #e8f2ed;
+    --help-text: #3d7a60;
+    --nav-active-bg: #2e3a50;
+    --nav-text-active: #eef0f5;
+    --nav-text-inactive: #8891a8;
+    --stop-fill: #f8eaea;
+    --stop-text: #b52020;
+    --close-fill: #2e3a50;
+    --close-text: #c5cdd8;
+    --toggle-off-track: #d5d0c8;
+    --toggle-off-border: #c2bdb5;
+    --accent: #3d7a60;
+    --accent2: #5db890;
+    --status-dot-on: #3d9e6c;
+    --status-dot-off: #9ea8b8;
+    --df-bg: #f2ede4;
+    --slider-groove: #dedad4;
+    --danger-border: #d63030;
+    --danger-text: #b52020;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: #060608;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── CANVAS BACKGROUND ── */
+  #bg-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+  }
+
+  /* ── APP SHELL ── */
+  .app-shell {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: 780px;
+    height: 560px;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 196px;
+    flex-shrink: 0;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--sidebar-border);
+    display: flex;
+    flex-direction: column;
+    padding: 0 0 16px;
+    transition: background 0.3s, border-color 0.3s;
+  }
+
+  .sidebar-header {
+    height: 110px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    cursor: move;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--nav-text-active);
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .logo-text span {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .nav-list {
+    flex: 1;
+    padding: 0 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nav-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 40px;
+    padding: 0 12px 0 18px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 9px;
+    font-family: var(--font);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--nav-text-inactive);
+    transition: color 0.18s;
+    width: 100%;
+    text-align: left;
+    letter-spacing: 0.3px;
+  }
+  .nav-btn::before {
+    content: '';
+    position: absolute;
+    left: 10px; top: 50%;
+    transform: translateY(-50%);
+    width: 3px; height: 0;
+    border-radius: 2px;
+    background: linear-gradient(180deg, var(--accent), var(--accent2));
+    transition: height 0.2s;
+  }
+  .nav-btn.active {
+    background: var(--nav-active-bg);
+    color: var(--nav-text-active);
+  }
+  .nav-btn.active::before { height: 18px; }
+  .nav-btn:hover:not(.active) {
+    background: rgba(255,255,255,0.04);
+    color: var(--nav-text-inactive);
+  }
+
+  .sidebar-footer {
+    padding: 0 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ── LAUNCH / STOP BUTTON ── */
+  .pill-btn {
+    width: 100%;
+    height: 54px;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
+    position: relative;
+    overflow: hidden;
+    transition: opacity 0.15s, transform 0.12s;
+  }
+  .pill-btn:active { transform: scale(0.97); opacity: 0.85; }
+  .pill-btn.launch {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+  }
+  .pill-btn.stop {
+    background: var(--stop-fill);
+    color: var(--stop-text);
+  }
+  .pill-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0);
+    transition: background 0.15s;
+  }
+  .pill-btn:hover::after { background: rgba(255,255,255,0.08); }
+
+  .pill-icon {
+    width: 14px; height: 14px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pill-icon svg { width: 14px; height: 14px; }
+
+  /* ── STATUS DOT ── */
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px;
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--status-dot-off);
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .status-dot.running {
+    background: var(--status-dot-on);
+    animation: pulse-dot 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+  .status-label {
+    font-size: 9px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── CONTENT AREA ── */
+  .content-area {
+    flex: 1;
+    position: relative;
+    background: var(--page-bg);
+    overflow: hidden;
+    transition: background 0.3s;
+  }
+
+  .content-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  /* ── PAGE ── */
+  .page {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    padding: 28px 24px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--card-border) transparent;
+  }
+  .page.active { display: block; }
+
+  .page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.4px;
+    margin-bottom: 3px;
+    transition: color 0.3s;
+  }
+  .page-sub {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    font-weight: 400;
+    transition: color 0.3s;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 6px 0;
+    transition: background 0.3s, border-color 0.3s;
+    backdrop-filter: blur(12px);
+  }
+
+  /* ── ROW ── */
+  .row {
+    padding: 11px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-bottom: 1px solid var(--card-border);
+    transition: border-color 0.3s;
+  }
+  .row:last-child { border-bottom: none; }
+
+  .row-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .field-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-primary);
+    flex: 1;
+    transition: color 0.3s;
+  }
+
+  .value-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace;
+    min-width: 48px;
+    text-align: right;
+    transition: color 0.3s;
+  }
+
+  /* ── HELP BADGE ── */
+  .help-badge {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--help-bg);
+    color: var(--help-text);
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: help;
+    flex-shrink: 0;
+    position: relative;
+    transition: background 0.15s;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .help-badge:hover { background: var(--accent); color: #fff; }
+  .help-badge:hover .tooltip { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+  .tooltip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 10px;
+    color: var(--text-primary);
+    width: 180px;
+    line-height: 1.5;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s, transform 0.15s;
+    z-index: 100;
+    font-family: var(--font);
+    font-weight: 400;
+    backdrop-filter: blur(12px);
+    white-space: normal;
+    text-align: left;
+  }
+
+  /* ── TOGGLE SWITCH ── */
+  .toggle {
+    width: 44px; height: 24px;
+    border-radius: 12px;
+    background: var(--toggle-off-track);
+    border: 1px solid var(--toggle-off-border);
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.25s, border-color 0.25s;
+  }
+  .toggle.on {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-color: transparent;
+  }
+  .toggle-knob {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+  .toggle.on .toggle-knob { transform: translateX(20px); }
+
+  /* ── COMBO BOX ── */
+  .combo {
+    height: 30px;
+    background: var(--combo-bg);
+    border: 1px solid var(--combo-border);
+    border-radius: 7px;
+    color: var(--combo-text);
+    font-family: var(--font);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 0 26px 0 9px;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239898a8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    transition: border-color 0.15s;
+    min-width: 140px;
+  }
+  .combo:focus { border-color: var(--accent); }
+  .light .combo {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%233d7a60' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+  .combo option { background: var(--combo-bg); }
+
+  /* ── SLIDER ── */
+  .slider-wrap { padding: 0 0 2px; }
+  input[type=range] {
+    width: 100%;
+    height: 22px;
+    -webkit-appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 5px;
+    border-radius: 3px;
+    background: var(--slider-groove);
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--text-primary);
+    margin-top: -5.5px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    transition: transform 0.1s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  input[type=range]::-moz-range-track {
+    height: 5px;
+    border-radius: 3px;
+    background: var(--slider-groove);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--text-primary);
+    border: none;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  }
+
+  /* ── OUTLINE / DANGER BUTTONS ── */
+  .outline-btn {
+    height: 28px;
+    padding: 0 14px;
+    border: 1px solid var(--outline-border);
+    border-radius: 7px;
+    background: var(--outline-bg);
+    color: var(--outline-text);
+    font-family: var(--font);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    white-space: nowrap;
+  }
+  .outline-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .danger-btn {
+    height: 28px;
+    padding: 0 14px;
+    border: 1px solid var(--danger-border);
+    border-radius: 7px;
+    background: transparent;
+    color: var(--danger-text);
+    font-family: var(--font);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .danger-btn:hover { background: rgba(155,40,40,0.1); }
+
+  /* ── WM BUTTONS ── */
+  .wm-bar {
+    position: absolute;
+    top: 10px; right: 12px;
+    z-index: 10;
+    display: flex;
+    gap: 4px;
+  }
+  .wm-btn {
+    width: 28px; height: 26px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #9090a8;
+    transition: background 0.15s, color 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .wm-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
+  /* ── MANUAL MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .modal {
+    width: 480px;
+    max-height: 70vh;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    overflow: hidden;
+    transform: scale(0.95) translateY(10px);
+    transition: transform 0.25s;
+    backdrop-filter: blur(20px);
+  }
+  .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+
+  .modal-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .modal-close {
+    width: 28px; height: 28px;
+    border: none;
+    background: var(--outline-bg);
+    border-radius: 7px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .modal-close:hover { background: var(--danger-border); color: #fff; }
+
+  .modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    max-height: calc(70vh - 72px);
+    scrollbar-width: thin;
+    scrollbar-color: var(--card-border) transparent;
+  }
+  .modal-body h3 {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'JetBrains Mono', monospace;
+    margin: 16px 0 8px;
+  }
+  .modal-body h3:first-child { margin-top: 0; }
+  .modal-body p {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 6px;
+  }
+  .modal-body ul {
+    padding-left: 14px;
+    margin-bottom: 6px;
+  }
+  .modal-body li {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  /* ── CAMERA PICKER MODAL ── */
+  .cam-picker .modal { width: 340px; }
+  .cam-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 24px;
+  }
+  .cam-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--card-border);
+    background: var(--outline-bg);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .cam-option:hover, .cam-option.selected {
+    border-color: var(--accent);
+    background: rgba(98,114,255,0.07);
+  }
+  .cam-radio {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--outline-border);
+    flex-shrink: 0;
+    position: relative;
+    transition: border-color 0.15s;
+  }
+  .cam-option.selected .cam-radio {
+    border-color: var(--accent);
+  }
+  .cam-option.selected .cam-radio::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .cam-label { font-size: 11px; font-weight: 500; color: var(--text-primary); }
+  .cam-sublabel { font-size: 9px; color: var(--text-secondary); margin-top: 1px; }
+  .cam-actions {
+    display: flex;
+    gap: 8px;
+    padding: 0 24px 20px;
+    justify-content: flex-end;
+  }
+
+  /* ── ACCENT SLIDER TRACK ── */
+  .accent-range { position: relative; }
+  .accent-range input[type=range] { position: relative; z-index: 1; }
+  .accent-track {
+    position: absolute;
+    left: 0; top: 50%; transform: translateY(-50%);
+    height: 5px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 3px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 3px; }
+
+  /* Smooth theme transition */
+  .sidebar, .content-area, .card, .row, .nav-btn,
+  .field-label, .page-title, .page-sub {
+    transition: background 0.3s, border-color 0.3s, color 0.3s;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<!-- App Shell -->
+<div class="app-shell" id="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-text">
+        Hand Controller
+        <span>v11 · settings</span>
+      </div>
+    </div>
+
+    <nav class="nav-list">
+      <button class="nav-btn active" onclick="setPage('GENERAL')">General</button>
+      <button class="nav-btn" onclick="setPage('CAMERA')">Camera</button>
+      <button class="nav-btn" onclick="setPage('DISPLAY')">Display</button>
+      <button class="nav-btn" onclick="setPage('KEYBOARD')">Keyboard</button>
+      <button class="nav-btn" onclick="setPage('MOUSE')">Mouse</button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="status-row">
+        <div class="status-dot" id="status-dot"></div>
+        <div class="status-label" id="status-label">Idle</div>
+      </div>
+      <button class="pill-btn launch" id="launch-btn" onclick="onLaunch()">
+        <span class="pill-icon">
+          <svg viewBox="0 0 14 14" fill="none">
+            <polygon points="3,1 3,13 12,7" fill="white"/>
+          </svg>
+        </span>
+        LAUNCH
+      </button>
+    </div>
+  </div>
+
+  <!-- Content Area -->
+  <div class="content-area" id="content-area">
+    <!-- WM Buttons -->
+    <div class="wm-bar">
+      <button class="wm-btn" title="Minimize">−</button>
+      <button class="wm-btn" onclick="alert('Close window')">✕</button>
+    </div>
+
+    <!-- GENERAL PAGE -->
+    <div class="page active" id="page-GENERAL">
+      <div class="page-title">General</div>
+      <div class="page-sub">App preferences & defaults</div>
+      <div class="card">
+        <!-- Language -->
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Language</div>
+            <select class="combo" style="min-width:110px">
+              <option>English</option>
+            </select>
+          </div>
+        </div>
+        <!-- Theme -->
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Theme</div>
+            <select class="combo" style="min-width:140px" id="theme-combo" onchange="applyTheme(this.value)">
+              <option>System Default</option>
+              <option>Light</option>
+              <option>Dark</option>
+            </select>
+          </div>
+        </div>
+        <!-- User Manual -->
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">User Manual</div>
+            <button class="outline-btn" onclick="openManual()">OPEN</button>
+          </div>
+        </div>
+        <!-- Minimize After Launch -->
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Minimize After Launch</div>
+            <div class="help-badge">?
+              <div class="tooltip">Minimizes the window to the taskbar after launch.</div>
+            </div>
+            <div class="toggle" id="toggle-minimize_after_launch" onclick="toggleSwitch('minimize_after_launch')">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Reset -->
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Reset to Default</div>
+            <button class="danger-btn" onclick="resetDefaults()">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAMERA PAGE -->
+    <div class="page" id="page-CAMERA">
+      <div class="page-title">Camera</div>
+      <div class="page-sub">Input device configuration</div>
+      <div class="card">
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Enable Camera</div>
+            <div class="help-badge">?
+              <div class="tooltip">Turns camera input on or off.</div>
+            </div>
+            <div class="toggle on" id="toggle-camera_enable" onclick="toggleSwitch('camera_enable')">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Camera Source</div>
+            <div class="help-badge">?
+              <div class="tooltip">Selects which camera device the app uses.</div>
+            </div>
+            <select class="combo" id="combo-camera_source">
+              <option value="0">Default Webcam</option>
+              <option value="1">Camera 1</option>
+              <option value="2">Camera 2</option>
+              <option value="3">Camera 3</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DISPLAY PAGE -->
+    <div class="page" id="page-DISPLAY">
+      <div class="page-title">Display</div>
+      <div class="page-sub">Overlay appearance settings</div>
+      <div class="card">
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Show Hand Skeleton</div>
+            <div class="help-badge">?
+              <div class="tooltip">Shows or hides hand skeleton lines on the overlay.</div>
+            </div>
+            <div class="toggle on" id="toggle-show_hand_skeleton" onclick="toggleSwitch('show_hand_skeleton')">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Hand Skeleton Thickness</div>
+            <div class="help-badge">?
+              <div class="tooltip">Adjusts the thickness of skeleton lines.</div>
+            </div>
+            <div class="value-label" id="val-skeleton_thickness">3px</div>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" min="1" max="10" value="3" id="sl-skeleton_thickness"
+              oninput="document.getElementById('val-skeleton_thickness').textContent=this.value+'px'">
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Show Live Selfie</div>
+            <div class="help-badge">?
+              <div class="tooltip">Shows or hides the live selfie preview.</div>
+            </div>
+            <div class="toggle on" id="toggle-show_live_selfie" onclick="toggleSwitch('show_live_selfie')">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Selfie Position</div>
+            <div class="help-badge">?
+              <div class="tooltip">Chooses where the selfie preview appears on screen.</div>
+            </div>
+            <select class="combo" id="combo-selfie_position">
+              <option value="top_left">Top Left</option>
+              <option value="top_right">Top Right</option>
+              <option value="bottom_left">Bottom Left</option>
+              <option value="bottom_right">Bottom Right</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Selfie Size</div>
+            <div class="help-badge">?
+              <div class="tooltip">Adjusts the size of the selfie preview.</div>
+            </div>
+            <div class="value-label" id="val-selfie_size">100%</div>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" min="50" max="160" value="100" id="sl-selfie_size"
+              oninput="document.getElementById('val-selfie_size').textContent=this.value+'%'">
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Show Gesture Command</div>
+            <div class="help-badge">?
+              <div class="tooltip">Shows or hides gesture feedback text.</div>
+            </div>
+            <div class="toggle on" id="toggle-show_gesture_command" onclick="toggleSwitch('show_gesture_command')">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Gesture Command Position</div>
+            <div class="help-badge">?
+              <div class="tooltip">Chooses where the gesture feedback appears.</div>
+            </div>
+            <select class="combo" id="combo-gesture_command_position">
+              <option value="top">Top</option>
+              <option value="center">Center</option>
+              <option value="bottom">Bottom</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KEYBOARD PAGE -->
+    <div class="page" id="page-KEYBOARD">
+      <div class="page-title">Keyboard</div>
+      <div class="page-sub">Virtual keyboard tap settings</div>
+      <div class="card">
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Tap Sensitivity</div>
+            <div class="help-badge">?
+              <div class="tooltip">How close fingers must be to register a keyboard tap.</div>
+            </div>
+            <div class="value-label" id="val-tap_sensitivity">30px</div>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" min="10" max="80" value="30" id="sl-tap_sensitivity"
+              oninput="document.getElementById('val-tap_sensitivity').textContent=this.value+'px'">
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Tap Cooldown</div>
+            <div class="help-badge">?
+              <div class="tooltip">Minimum delay between consecutive keyboard taps.</div>
+            </div>
+            <div class="value-label" id="val-tap_cooldown">300 ms</div>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" min="0" max="600" value="300" id="sl-tap_cooldown"
+              oninput="document.getElementById('val-tap_cooldown').textContent=this.value+' ms'">
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Enable Virtual Keyboard</div>
+            <div class="help-badge">?
+              <div class="tooltip">Turns the virtual keyboard feature on or off.</div>
+            </div>
+            <div class="toggle on" id="toggle-keyboard_enable" onclick="toggleSwitch('keyboard_enable')">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOUSE PAGE -->
+    <div class="page" id="page-MOUSE">
+      <div class="page-title">Mouse</div>
+      <div class="page-sub">Cursor movement & feel</div>
+      <div class="card">
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Sensitivity</div>
+            <div class="help-badge">?
+              <div class="tooltip">Adjusts how strongly hand movement affects cursor speed.</div>
+            </div>
+            <div class="value-label" id="val-mouse_sensitivity">1.00x</div>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" min="30" max="200" value="100" id="sl-mouse_sensitivity"
+              oninput="document.getElementById('val-mouse_sensitivity').textContent=(this.value/100).toFixed(2)+'x'">
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Smoothness</div>
+            <div class="help-badge">?
+              <div class="tooltip">Adds smoothing to reduce jitter in cursor movement.</div>
+            </div>
+            <div class="value-label" id="val-mouse_smoothness">0.50</div>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" min="10" max="90" value="50" id="sl-mouse_smoothness"
+              oninput="document.getElementById('val-mouse_smoothness').textContent=(this.value/100).toFixed(2)">
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-top">
+            <div class="field-label">Dead Zone</div>
+            <div class="help-badge">?
+              <div class="tooltip">Ignores tiny movements near the resting hand position.</div>
+            </div>
+            <div class="value-label" id="val-mouse_dead_zone">3.0px</div>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" min="0" max="100" value="30" id="sl-mouse_dead_zone"
+              oninput="document.getElementById('val-mouse_dead_zone').textContent=(this.value/10).toFixed(1)+'px'">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- User Manual Modal -->
+<div class="modal-overlay" id="manual-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">User Manual</div>
+      <button class="modal-close" onclick="closeManual()">✕</button>
+    </div>
+    <div class="modal-body">
+      <h3>Getting Started</h3>
+      <p>Hand Controller uses your webcam to track hand gestures in real-time, enabling touchless control of your cursor and virtual keyboard.</p>
+      <h3>Launching</h3>
+      <p>Click the <strong>LAUNCH</strong> button to start. A camera picker will appear so you can select your preferred input device. The status dot turns green when active.</p>
+      <h3>Mouse Control</h3>
+      <p>Move your hand in front of the camera to control the cursor. Adjust <em>Sensitivity</em>, <em>Smoothness</em>, and <em>Dead Zone</em> in the Mouse tab to fine-tune feel.</p>
+      <h3>Virtual Keyboard</h3>
+      <p>Bring fingertips close together to simulate a tap. <em>Tap Sensitivity</em> controls how close fingers must be, while <em>Tap Cooldown</em> prevents accidental repeat taps.</p>
+      <h3>Overlay Options</h3>
+      <ul>
+        <li><strong>Hand Skeleton</strong> — shows tracking lines over your hand</li>
+        <li><strong>Live Selfie</strong> — a small camera preview at a corner of your screen</li>
+        <li><strong>Gesture Command</strong> — displays the recognized gesture as text</li>
+      </ul>
+      <h3>Tips</h3>
+      <p>For best results, ensure your hand is well-lit and the background is contrasting. Keep your hand within the camera frame and use deliberate gestures.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Camera Picker Modal -->
+<div class="modal-overlay cam-picker" id="cam-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Select Camera</div>
+      <button class="modal-close" onclick="closeCamModal()">✕</button>
+    </div>
+    <div class="cam-options" id="cam-options">
+      <div class="cam-option selected" onclick="selectCam(0,this)">
+        <div class="cam-radio"></div>
+        <div>
+          <div class="cam-label">Default Webcam</div>
+          <div class="cam-sublabel">index 0</div>
+        </div>
+      </div>
+      <div class="cam-option" onclick="selectCam(1,this)">
+        <div class="cam-radio"></div>
+        <div>
+          <div class="cam-label">Camera 1</div>
+          <div class="cam-sublabel">index 1</div>
+        </div>
+      </div>
+      <div class="cam-option" onclick="selectCam(2,this)">
+        <div class="cam-radio"></div>
+        <div>
+          <div class="cam-label">Camera 2</div>
+          <div class="cam-sublabel">index 2</div>
+        </div>
+      </div>
+      <div class="cam-option" onclick="selectCam(3,this)">
+        <div class="cam-radio"></div>
+        <div>
+          <div class="cam-label">Camera 3</div>
+          <div class="cam-sublabel">index 3</div>
+        </div>
+      </div>
+    </div>
+    <div class="cam-actions">
+      <button class="outline-btn" onclick="closeCamModal()">Cancel</button>
+      <button class="pill-btn launch" style="width:auto;height:34px;font-size:9px;padding:0 16px;border-radius:8px" onclick="confirmLaunch()">Launch</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DEPTH FIELD BACKGROUND ────────────────────────────────────────
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+
+let W, H;
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const orbParams = [
+  {fx:0.00031, fy:0.00019, px:0.0, py:1.1},
+  {fx:0.00023, fy:0.00037, px:2.1, py:0.4},
+  {fx:0.00017, fy:0.00027, px:4.3, py:3.0},
+];
+
+let darkOrbs = [
+  {color:'#3a3f8f', alpha:0.18, rFrac:0.72},
+  {color:'#5c3f8a', alpha:0.13, rFrac:0.60},
+  {color:'#1a2a6e', alpha:0.12, rFrac:0.80},
+];
+let lightOrbs = [
+  {color:'#7a9e8a', alpha:0.13, rFrac:0.70},
+  {color:'#5a7a8e', alpha:0.10, rFrac:0.62},
+  {color:'#9aaa88', alpha:0.09, rFrac:0.78},
+];
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return {r,g,b};
+}
+
+let t = 0;
+let isDark = true;
+
+function draw() {
+  t += 40;
+  const orbs = isDark ? darkOrbs : lightOrbs;
+  const bgColor = isDark ? '#0d0d12' : '#f2ede4';
+  const lineColor = isDark ? '98,114,255' : '61,122,96';
+  const lineAlpha = isDark ? 0.030 : 0.028;
+  const spacing = 28;
+
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(0,0,W,H);
+
+  orbs.forEach((od, i) => {
+    const op = orbParams[i];
+    const cx = W*0.5 + W*0.30*Math.sin(op.fx*t + op.px);
+    const cy = H*0.5 + H*0.28*Math.cos(op.fy*t + op.py);
+    const radius = Math.min(W,H)*od.rFrac;
+    const rgb = hexToRgb(od.color);
+
+    const grad = ctx.createRadialGradient(cx,cy,0,cx,cy,radius);
+    grad.addColorStop(0,   `rgba(${rgb.r},${rgb.g},${rgb.b},${od.alpha})`);
+    grad.addColorStop(0.55,`rgba(${rgb.r},${rgb.g},${rgb.b},${od.alpha*0.40})`);
+    grad.addColorStop(1,   `rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI*2);
+    ctx.fill();
+  });
+
+  // diagonal crosshatch
+  ctx.strokeStyle = `rgba(${lineColor},${lineAlpha})`;
+  ctx.lineWidth = 0.5;
+  let x = -H;
+  while (x < W + H) {
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x+H,H); ctx.stroke();
+    x += spacing;
+  }
+  x = -H;
+  while (x < W + H) {
+    ctx.beginPath(); ctx.moveTo(x+H,0); ctx.lineTo(x,H); ctx.stroke();
+    x += spacing;
+  }
+
+  requestAnimationFrame(draw);
+}
+draw();
+
+// ── THEME ─────────────────────────────────────────────────────────
+function applyTheme(val) {
+  const app = document.getElementById('app');
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (val === 'Light') {
+    app.classList.add('light'); isDark = false;
+  } else if (val === 'Dark') {
+    app.classList.remove('light'); isDark = true;
+  } else {
+    isDark = !mq.matches;
+    if (mq.matches) app.classList.remove('light');
+    else app.classList.add('light');
+  }
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────
+let currentPage = 'GENERAL';
+const pages = ['GENERAL','CAMERA','DISPLAY','KEYBOARD','MOUSE'];
+
+function setPage(pg) {
+  currentPage = pg;
+  pages.forEach(p => {
+    document.getElementById('page-'+p).classList.toggle('active', p===pg);
+  });
+  document.querySelectorAll('.nav-btn').forEach((btn,i) => {
+    btn.classList.toggle('active', pages[i]===pg);
+  });
+}
+
+// ── TOGGLE ────────────────────────────────────────────────────────
+function toggleSwitch(key) {
+  const el = document.getElementById('toggle-'+key);
+  if (!el) return;
+  el.classList.toggle('on');
+}
+
+// ── LAUNCH ────────────────────────────────────────────────────────
+let running = false;
+let selectedCam = 0;
+
+function onLaunch() {
+  if (running) {
+    setRunning(false);
+  } else {
+    document.getElementById('cam-modal').classList.add('open');
+  }
+}
+
+function setRunning(v) {
+  running = v;
+  const btn = document.getElementById('launch-btn');
+  const dot = document.getElementById('status-dot');
+  const lbl = document.getElementById('status-label');
+  if (v) {
+    btn.className = 'pill-btn stop';
+    btn.innerHTML = `<span class="pill-icon"><svg viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="2" fill="#ff8888"/></svg></span>STOP`;
+    dot.classList.add('running');
+    lbl.textContent = 'Running';
+  } else {
+    btn.className = 'pill-btn launch';
+    btn.innerHTML = `<span class="pill-icon"><svg viewBox="0 0 14 14" fill="none"><polygon points="3,1 3,13 12,7" fill="white"/></svg></span>LAUNCH`;
+    dot.classList.remove('running');
+    lbl.textContent = 'Idle';
+  }
+}
+
+function selectCam(idx, el) {
+  selectedCam = idx;
+  document.querySelectorAll('.cam-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  // Sync camera source combo
+  const combo = document.getElementById('combo-camera_source');
+  if (combo) combo.value = idx;
+}
+
+function confirmLaunch() {
+  closeCamModal();
+  setRunning(true);
+}
+
+function closeCamModal() {
+  document.getElementById('cam-modal').classList.remove('open');
+}
+
+// ── MANUAL MODAL ──────────────────────────────────────────────────
+function openManual() {
+  document.getElementById('manual-modal').classList.add('open');
+}
+function closeManual() {
+  document.getElementById('manual-modal').classList.remove('open');
+}
+document.getElementById('manual-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeManual();
+});
+document.getElementById('cam-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeCamModal();
+});
+
+// ── RESET ─────────────────────────────────────────────────────────
+function resetDefaults() {
+  // sliders
+  const defaults = {
+    'skeleton_thickness': {val:3, fmt: v=>`${v}px`},
+    'selfie_size': {val:100, fmt: v=>`${v}%`},
+    'tap_sensitivity': {val:30, fmt: v=>`${v}px`},
+    'tap_cooldown': {val:300, fmt: v=>`${v} ms`},
+    'mouse_sensitivity': {val:100, fmt: v=>`${(v/100).toFixed(2)}x`},
+    'mouse_smoothness': {val:50, fmt: v=>`${(v/100).toFixed(2)}`},
+    'mouse_dead_zone': {val:30, fmt: v=>`${(v/10).toFixed(1)}px`},
+  };
+  for (const [k, d] of Object.entries(defaults)) {
+    const sl = document.getElementById('sl-'+k);
+    const vl = document.getElementById('val-'+k);
+    if (sl) sl.value = d.val;
+    if (vl) vl.textContent = d.fmt(d.val);
+  }
+  // toggles on
+  ['camera_enable','show_hand_skeleton','show_live_selfie','keyboard_enable','show_gesture_command'].forEach(k => {
+    const el = document.getElementById('toggle-'+k);
+    if (el) el.classList.add('on');
+  });
+  // minimize off
+  const el = document.getElementById('toggle-minimize_after_launch');
+  if (el) el.classList.remove('on');
+  // theme
+  document.getElementById('theme-combo').value = 'System Default';
+  applyTheme('System Default');
+}
+</script>
+</body>
+</html>
